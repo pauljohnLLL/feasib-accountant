@@ -449,7 +449,7 @@ export default function App() {
     <div className="w-full min-h-screen bg-[#0B2F1D] text-white font-sans antialiased selection:bg-[#205A3E]">
       <AnimatePresence mode="wait">
 
-        {/* 1. LANDING PAGE */}
+        {/* LANDING PAGE */}
         {currentView === 'landing' && (
           <motion.div
             key="landing-page"
@@ -780,7 +780,7 @@ export default function App() {
               </div>
             </motion.section>
 
-            {/* AI & COURSE LIBRARY CARDS - GLASSIFIED */}
+            {/* AI & COURSE LIBRARY CARDS */}
             <motion.section
               initial="hidden"
               whileInView="visible"
@@ -841,7 +841,7 @@ export default function App() {
               </div>
             </motion.section>
 
-            {/* TESTIMONIALS - GLASSIFIED */}
+            {/* TESTIMONIALS */}
             <motion.section
               initial="hidden"
               whileInView="visible"
@@ -887,7 +887,7 @@ export default function App() {
               </div>
             </motion.section>
 
-            {/* FAQ - GLASSIFIED & 3D EFFECT */}
+            {/* FAQ  */}
             <motion.section
               initial="hidden"
               whileInView="visible"
@@ -966,21 +966,26 @@ export default function App() {
                   <a href="#" className="hover:text-white transition-colors">Contact Us</a>
                 </div>
 
-                {/* Social Icons */}
+                {/* Social Icons (FB, YT, LinkedIn) */}
                 <div className="flex gap-6 mb-10">
+                  {/* Facebook */}
                   <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                       <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
                     </svg>
                   </a>
+                  
+                  {/* YouTube */}
                   <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                     </svg>
                   </a>
+
+                  {/* LinkedIn */}
                   <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M12 0C5.373 0 0 5.373 0 12c0 5.302 3.438 9.8 8.205 11.387.6.113.82-.26.82-.58 0-.287-.01-1.05-.015-2.06-3.338.726-4.042-1.61-4.042-1.61-.546-1.39-1.335-1.76-1.335-1.76-1.09-.746.082-.73.082-.73 1.205.085 1.838 1.236 1.838 1.236 1.07 1.835 2.807 1.305 3.492.998.108-.775.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.468-2.38 1.235-3.22-.123-.3-.535-1.52.117-3.16 0 0 1.008-.322 3.3 1.23.96-.267 1.98-.4 3-.405 1.02.005 2.04.138 3 .405 2.29-1.552 3.297-1.23 3.297-1.23.653 1.64.24 2.86.118 3.16.768.84 1.233 1.91 1.233 3.22 0 4.61-2.804 5.62-5.476 5.92.43.37.824 1.102.824 2.22 0 1.602-.015 2.894-.015 3.287 0 .322.216.698.83.578C20.565 21.795 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
                     </svg>
                   </a>
                 </div>
