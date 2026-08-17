@@ -1,248 +1,15 @@
-import { useState, useRef, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion';
-import type { Variants } from 'framer-motion';
-import { useLedgerEntries } from '../services/queries.ts';
+import { BrowserRouter as Router, Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import LandingPage from './LandingPage'; 
+import Resources from './Resources';
+import Login from './Login';
 import AdminDashboard from './AdminDashboard';
-import ClientDashboard from './ClientDashboard'
+import ClientDashboard from './ClientDashboard';
 
-const chartBars = [22, 34, 28, 45, 38, 52, 60, 55, 70, 66, 82, 90]
-
-const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
-  }
-};
-
-const staggerContainer: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12 }
-  }
-};
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 1 } }
-};
-
-type View = 'landing' | 'login' | 'dashboard' | 'admin';
-
-const servicesData = [
-  {
-    id: 1,
-    title: "Financial Assumption",
-    inclusions: ["General Assumptions", "Asset Assumptions", "Liability Assumptions", "Equity Assumptions", "Revenue Assumptions", "Expense Assumptions"]
-  },
-  {
-    id: 2,
-    title: "Projected Financial Statements",
-    inclusions: ["Statement of Financial Position / Balance Sheet", "Statement of Comprehensive Income / Income Statement / Profit and Loss Statement", "Statement of Cash Flows", "Statement of Changes in Equity"]
-  },
-  {
-    id: 3,
-    title: "Notes to the Financial Statements",
-    inclusions: ["Notes for Income Statement Accounts", "Notes for Balance Sheet Accounts", "Notes for Cash Flow"]
-  },
-  {
-    id: 4,
-    title: "Initial Capital Requirement",
-    inclusions: ["Capital Expenditures", "Initial Working Capital", "Pre-Operating Expenses"]
-  },
-  {
-    id: 5,
-    title: "Employee's Payroll",
-    inclusions: ["Employee Salary", "Employee Benefits", "13th Month Pay", "SSS Contribution", "PhilHealth Contribution", "Pag-IBIG Contribution", "De Minimis Benefits"]
-  },
-  {
-    id: 6,
-    title: "Financial Ratios",
-    inclusions: ["Liquidity Ratio", "Efficiency Ratio", "Solvency Ratio", "Profitability Ratio"]
-  },
-  {
-    id: 7,
-    title: "Cost-Volume-Profit Analysis",
-    inclusions: ["Break-Even Point Analysis", "Sensitivity Analysis"]
-  },
-  {
-    id: 8,
-    title: "Capital Budgeting (Time Value of Money)",
-    inclusions: ["Discounted Payback Period", "Undiscounted Payback Period", "Net Present Value", "Profitability Index", "Internal Rate of Return"]
-  },
-  {
-    id: 9,
-    title: "Feasibility Study Assistance (Other than Financial)",
-    inclusions: ["Survey Questionnaire Writing and/or Validation", "Demand and Supply Analysis", "Assistance to non-financial-related chapters of the study", "Slide Presentations", "English Grammar and Plagiarism Checking"]
-  }
-];
-
-const freeServicesData = [
-  {
-    title: "Financial Aspect Walkthrough",
-    desc: "A thorough explanation of how the output was computed/prepared. This will be done via MS Teams meeting and is recorded for the clients to rewatch as needed.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <rect x="3" y="4" width="18" height="13" rx="2" stroke="#79b669" strokeWidth="1.6" />
-        <path d="M8 21h8M12 17v4" stroke="#79b669" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    title: "Revisions",
-    desc: "No charge for any minor revisions before and after the defense, given that it has not been repeatedly revised. Please refer to the revision policy for more details.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M4 20l1.2-4.2L16 5a2 2 0 0 1 3 3L8.2 18.8 4 20Z" stroke="#79b669" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    )
-  },
-  {
-    title: "Feasibility Study Consultation",
-    desc: "Check and review your papers for any commonly revised items, then suggest the necessary corrections. Give some advice on how to ace their defense.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" stroke="#79b669" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    )
-  },
-  {
-    title: "Other Assistance",
-    desc: "Assistance for other matters may vary depending on the service availed. Please refer to the pricing terms and conditions for more details.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM15 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20c.5-2.7 2.6-4.5 6-4.5S14.5 17.3 15 20M12 20c.5-2.7 2.6-4.5 5-4.5" stroke="#79b669" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-];
-
-const serviceFlowSteps = [
-  {
-    num: '01',
-    title: 'Inquiry',
-    short: 'Discuss your needs',
-    desc: 'To clarify what outputs do you need and its requirements. Our team will check and review your available data as needed. Read and agree to our service terms and conditions.',
-    image: 'Inquiryimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" stroke="#104502" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    )
-  },
-  {
-    num: '02',
-    title: 'Initial Payment',
-    short: 'Downpayment lock-in',
-    desc: 'Once confirmed and accepted by the team, 50% down payment should be settled.',
-    image: 'Initialpaymentimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <rect x="2" y="6" width="20" height="13" rx="2" stroke="#104502" strokeWidth="1.6" />
-        <circle cx="12" cy="12.5" r="3" stroke="#104502" strokeWidth="1.6" />
-      </svg>
-    )
-  },
-  {
-    num: '03',
-    title: 'Document Preparation',
-    short: 'Drafting your file',
-    desc: 'Once the necessary data has been sent and the down payment has been settled, assigned preparer will start the output. Our team will provide estimated time of completion for the draft output.',
-    image: 'Documentpreparationimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="#104502" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M13 6l4 4" stroke="#104502" strokeWidth="1.6" />
-      </svg>
-    )
-  },
-  {
-    num: '04',
-    title: 'ConsultationMeeting',
-    short: 'Progress review',
-    desc: 'After preparation of the draft output, you/your group will be scheduled for a meeting to finalize and explain the output.',
-    image: 'Consultationmeetingimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <circle cx="8" cy="9" r="3" stroke="#104502" strokeWidth="1.6" />
-        <circle cx="16" cy="9" r="3" stroke="#104502" strokeWidth="1.6" />
-        <path d="M2 20c.6-3 3-5 6-5s5.4 2 6 5M12 20c.5-2.6 2.4-4.5 5-5" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    num: '05',
-    title: 'Final Payment',
-    short: 'Balance clearance',
-    desc: 'After the meeting, the finalized output and the recording will be sent by our team. Once the file is received, the payment balance should be settled.',
-    image: 'Finalpaymentimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <rect x="4" y="3" width="16" height="18" rx="2" stroke="#104502" strokeWidth="1.6" />
-        <path d="M8 8h8M8 12h8M8 16h4" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    num: '06',
-    title: 'Revisions',
-    short: 'Final adjustments',
-    desc: "Just message our page for any revisions, if there's any. Revisions may or may not be conducted during a meeting, subject to agreement of both parties.",
-    image: 'Revisionimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M3 12a9 9 0 1 1 3 6.7" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M3 18v-4h4" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-];
-
-const testimonialsData = [
-  {
-    name: "Ma. Cristina Reyes",
-    role: "Business Admin Student",
-    quote: "Their feasibility work is so detailed. My panel was impressed with the sensitivity analysis!",
-    initials: "CR"
-  },
-  {
-    name: "Robert Santos",
-    role: "SME Owner",
-    quote: "The BIR tax mapping saved my business from penalties. Very professional and worth every cent.",
-    initials: "RS"
-  },
-  {
-    name: "Kevin Dela Cruz",
-    role: "MBA Graduate",
-    quote: "I recommend them for anyone struggling with financial forecasting. They make it simple to understand.",
-    initials: "KD"
-  }
-];
-
-const faqData = [
-  {
-    question: "How long does a feasibility study take?",
-    answer: "The timeline depends on the complexity of your study and the availability of your data. On average, it takes about 1 to 2 weeks for the initial draft, followed by a consultation meeting and final revisions."
-  },
-  {
-    question: "Can you help with BIR registration?",
-    answer: "We focus primarily on the Financial Aspect computations for feasibility studies. However, if you need non-financial assistance like BIR registration guidelines, we can point you to the right resources."
-  },
-  {
-    question: "Do you provide the Excel files?",
-    answer: "Yes! We provide the finalized Financial Aspect in both PDF format for submission and the raw Excel files so you can see the formulas and data sources behind the computations."
-  },
-  {
-    question: "What are your payment terms?",
-    answer: "We require a 50% downpayment to lock in your slot and begin drafting. The remaining 50% balance is due once the final output has been presented and approved during the consultation meeting."
-  }
-];
-
-function Logo({ onClick }: { onClick?: () => void }) {
+// --- NAVBAR COMPONENT ---
+function Logo({ navigate }: { navigate: (path: string) => void }) {
   return (
-    <div className="flex items-center cursor-pointer select-none" onClick={onClick}>
+    <div className="flex items-center cursor-pointer select-none" onClick={() => navigate('/')}>
       <div className="flex flex-col leading-none tracking-tight">
         <div className="text-white text-2xl font-bold flex items-end tracking-wide">
           <span>feas</span>
@@ -259,766 +26,124 @@ function Logo({ onClick }: { onClick?: () => void }) {
   );
 }
 
-function NavBar({ setCurrentView }: { setCurrentView: (v: View) => void }) {
+function NavBar({ navigate }: { navigate: (path: string) => void }) {
+  // Helper function to handle scrolling to sections
+  const handleNavClick = (path: string, sectionId?: string) => {
+    if (window.location.pathname !== '/') {
+      // If we are not on the home page, navigate home first, then scroll slightly later
+      navigate('/');
+      setTimeout(() => {
+        const element = document.getElementById(sectionId || 'home');
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+      }, 300);
+    } else {
+      // If we are already on the home page, just scroll immediately
+      const element = document.getElementById(sectionId || 'home');
+      if (element) element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <nav className="w-full bg-[#205A3E]/95 backdrop-blur-md flex items-center justify-between px-10 py-4 sticky top-0 z-50 border-b border-white/20 shadow-md">
-      <Logo onClick={() => setCurrentView('landing')} />
-
+      <Logo navigate={navigate} />
       <div className="hidden md:flex items-center gap-8 text-xs font-bold text-slate-200">
-        <a href="#home" className="hover:text-emerald-400 transition-colors">Home</a>
-        <a href="#services" className="hover:text-emerald-400 transition-colors">Service Offered</a>
-        <a href="#resources" className="hover:text-emerald-400 transition-colors">Resources</a>
-        <a href="#tools" className="hover:text-emerald-400 transition-colors">Financial Tools</a>
+        {/* Home Button - Scrolls to top */}
+        <button onClick={() => handleNavClick('/', 'home')} className="hover:text-emerald-400 transition-colors">
+          Home
+        </button>
+        
+        {/* Service Offered Button - Scrolls to #services */}
+        <button onClick={() => handleNavClick('/', 'services')} className="hover:text-emerald-400 transition-colors">
+          Service Offered
+        </button>
+        
+        {/* Resources Button - Direct Page Nav */}
+        <button onClick={() => navigate('/resources')} className="hover:text-emerald-400 transition-colors">
+          Resources
+        </button>
+        
+        {/* Financial Tools Button - Scrolls to #tools */}
+        <button onClick={() => handleNavClick('/', 'tools')} className="hover:text-emerald-400 transition-colors">
+          Financial Tools
+        </button>
       </div>
-
       <div className="flex items-center gap-4">
-        <button
-          onClick={() => setCurrentView('login')}
-          className="text-xs font-bold text-slate-200 hover:text-white px-3 py-1.5 transition-colors"
-        >
-          Log In
-        </button>
-        <button className="bg-white hover:bg-slate-100 text-[#0B2F1D] text-xs font-black px-4 py-2.5 rounded-xl transition-all shadow-md">
-          Book Free Consultation
-        </button>
+        <button onClick={() => navigate('/login')} className="text-xs font-bold text-slate-200 hover:text-white px-3 py-1.5 transition-colors">Log In</button>
+        <button className="bg-white hover:bg-slate-100 text-[#0B2F1D] text-xs font-black px-4 py-2.5 rounded-xl transition-all shadow-md">Book Free Consultation</button>
       </div>
     </nav>
   );
 }
 
-function LoginRoleSelect({ setCurrentView }: { setCurrentView: (v: View) => void }) {
+// --- GLOBAL FOOTER COMPONENT ---
+function GlobalFooter() {
   return (
-    <motion.div
-      key="login"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="min-h-screen flex items-center justify-center bg-[#0B2F1D] px-6"
+    <motion.section
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: false, amount: 0.2 }}
+      className="w-full bg-[#00450d]/80 backdrop-blur-md border-t border-white/10 py-16 px-6 md:px-12 lg:px-16"
     >
-      <div className="bg-[#205A3E]/90 backdrop-blur-md border border-white/20 p-8 md:p-10 rounded-2xl flex flex-col gap-4 w-full max-w-sm shadow-2xl">
-        <h2 className="text-xl font-bold text-white mb-2">Continue as</h2>
-        <p className="text-xs text-slate-300 mb-2">Choose which portal you'd like to log in to.</p>
-
-        <button
-          onClick={() => setCurrentView('dashboard')}
-          className="bg-white text-[#0B2F1D] px-6 py-3 rounded-lg font-bold text-sm hover:bg-slate-100 transition-colors"
-        >
-          Client Login
-        </button>
-        <button
-          onClick={() => setCurrentView('admin')}
-          className="bg-emerald-900 text-white px-6 py-3 rounded-lg font-bold text-sm hover:bg-emerald-800 transition-colors"
-        >
-          Admin Login
-        </button>
-
-        <button
-          onClick={() => setCurrentView('landing')}
-          className="text-xs mt-2 underline opacity-70 text-white hover:opacity-100 transition-opacity"
-        >
-          Back to home
-        </button>
+      <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
+        <h2 className="text-white font-bold text-2xl md:text-3xl tracking-tight mb-10">Feasib Accountant</h2>
+        <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-12 text-xs md:text-sm text-[#b3d1b3]">
+          <a href="#" className="hover:text-white transition-colors">Home</a>
+          <a href="#" className="hover:text-white transition-colors">Services Offered</a>
+          <a href="#" className="hover:text-white transition-colors">Resources</a>
+          <a href="#" className="hover:text-white transition-colors">Terms and Conditions</a>
+          <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
+          <a href="#" className="hover:text-white transition-colors">About Us</a>
+          <a href="#" className="hover:text-white transition-colors">Contact Us</a>
+        </div>
+        <div className="flex gap-6 mb-10">
+          <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" /></svg>
+          </a>
+          <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+          <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+          </a>
+        </div>
+        <p className="text-[#b3d1b3] text-xs leading-relaxed max-w-2xl">
+          &copy; 2024 Feasib Accountant. All rights reserved. We are here to help you have your Feasibility Study DEFENDED. Should need any help, contact our support team.
+        </p>
       </div>
-    </motion.div>
+    </motion.section>
   );
 }
 
-function ServiceFlowCarousel() {
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const pausedRef = useRef(false);
-  const draggingRef = useRef(false);
-  const startXRef = useRef(0);
-  const startScrollRef = useRef(0);
-  const resumeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let raf: number;
-    const speed = 0.6;
-
-    const tick = () => {
-      if (!pausedRef.current && !draggingRef.current) {
-        el.scrollLeft += speed;
-        const singleSetWidth = el.scrollWidth / 2;
-        if (el.scrollLeft >= singleSetWidth) {
-          el.scrollLeft -= singleSetWidth;
-        }
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-
-  const scheduleResume = () => {
-    if (resumeTimeout.current) clearTimeout(resumeTimeout.current);
-    resumeTimeout.current = setTimeout(() => {
-      pausedRef.current = false;
-    }, 1200);
-  };
-
-  const onPointerDown = (e: React.PointerEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    pausedRef.current = true;
-    if (resumeTimeout.current) clearTimeout(resumeTimeout.current);
-
-    if (e.pointerType === 'mouse') {
-      draggingRef.current = true;
-      startXRef.current = e.clientX;
-      startScrollRef.current = el.scrollLeft;
-      try { el.setPointerCapture(e.pointerId); } catch {}
-    }
-  };
-
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!draggingRef.current) return;
-    const el = scrollRef.current;
-    if (!el) return;
-    const delta = e.clientX - startXRef.current;
-    el.scrollLeft = startScrollRef.current - delta;
-  };
-
-  const endDrag = (e: React.PointerEvent) => {
-    if (draggingRef.current && scrollRef.current) {
-      try { scrollRef.current.releasePointerCapture(e.pointerId); } catch {}
-    }
-    draggingRef.current = false;
-    scheduleResume();
-  };
-
-  const cards = [...serviceFlowSteps, ...serviceFlowSteps];
+// --- MAIN APP WRAPPER ---
+function AppContent() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
   return (
-    <div className="relative">
-      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#f7faf7] to-transparent" />
-      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#f7faf7] to-transparent" />
-
-      <div
-        ref={scrollRef}
-        className="flex gap-6 overflow-x-auto cursor-grab active:cursor-grabbing select-none [&::-webkit-scrollbar]:hidden"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={endDrag}
-        onPointerLeave={endDrag}
-        onPointerCancel={endDrag}
-        onWheel={() => { pausedRef.current = true; scheduleResume(); }}
-      >
-        {cards.map((step, i) => (
-          <div
-            key={i}
-            className="shrink-0 w-[280px] md:w-[320px] bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl shadow-xl overflow-hidden select-none"
-          >
-            <div className="h-36 bg-gradient-to-br from-[#c9d8c8] via-[#e6ede5] to-[#dfe8dd] relative overflow-hidden">
-              {step.image ? (
-                <img 
-                  src={step.image} 
-                  alt={step.title} 
-                  className="w-full h-full object-cover" 
-                />
-              ) : null}
-            </div>
-            <div className="p-6">
-              <span className="block text-3xl font-semibold text-[#00450d]/15 leading-none mb-2">{step.num}</span>
-              <h3 className="text-[#00450d] font-bold text-lg mb-2">{step.title}</h3>
-              <p className="text-[#41493e] text-xs leading-relaxed">{step.desc}</p>
-            </div>
-          </div>
-        ))}
+    <div className="w-full min-h-screen bg-[#0B2F1D] text-white font-sans antialiased selection:bg-[#205A3E] flex flex-col">
+      <NavBar navigate={navigate} />
+      
+      <div className="flex-grow">
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/login" element={<Login navigate={navigate} />} />
+            <Route path="/dashboard" element={<ClientDashboard onBack={() => navigate('/')} />} />
+            <Route path="/admin" element={<AdminDashboard onSignOut={() => navigate('/')} />} />
+          </Routes>
+        </AnimatePresence>
       </div>
+
+      <GlobalFooter />
     </div>
   );
 }
 
 export default function App() {
-  const [currentView, setCurrentView] = useState<View>('landing');
-  const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
-  const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
-
-  const toggleAccordion = (index: number) => {
-    setActiveAccordion(activeAccordion === index ? null : index);
-  };
-
-  const toggleFAQ = (index: number) => {
-    setActiveFAQ(activeFAQ === index ? null : index);
-  };
-
   return (
-    <div className="w-full min-h-screen bg-[#0B2F1D] text-white font-sans antialiased selection:bg-[#205A3E]">
-      <AnimatePresence mode="wait">
-
-        {/* LANDING PAGE */}
-        {currentView === 'landing' && (
-          <motion.div
-            key="landing-page"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
-            <NavBar setCurrentView={setCurrentView} />
-
-            {/* Hero */}
-            <motion.section
-              id="home"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-              className="relative min-h-screen flex flex-col justify-between text-white overflow-hidden bg-[#0B2F1D]"
-            >
-              <motion.div variants={fadeIn} className="absolute inset-0 z-0">
-                <video autoPlay loop muted playsInline className="w-full h-full object-cover opacity-100">
-                  <source src="landingvid.mp4" type="video/mp4" />
-                </video>
-              </motion.div>
-              <div className="absolute inset-0 bg-gradient-to-b from-[#0B2F1D]/80 via-transparent to-[#0B2F1D] pointer-events-none z-10" />
-
-              <motion.div variants={staggerContainer} className="relative z-20 max-w-4xl mx-auto px-6 text-center pt-32 pb-12 flex-1 flex flex-col justify-center items-center">
-                <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 mb-6">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-[10px] font-bold tracking-widest text-emerald-300 uppercase">YOUR STUDY, OUR STRATEGY.</span>
-                </motion.div>
-
-                <motion.h1 variants={fadeInUp} className="text-4xl md:text-6xl font-sans font-black text-white tracking-tight max-w-3xl leading-[1.15] mb-6">
-                  Don't stress yourself. <br /><span className="text-emerald-300 italic font-normal font-serif">Let the accountant</span> <br />do the accounting.
-                </motion.h1>
-
-                <motion.p variants={fadeInUp} className="text-sm md:text-base text-slate-200 font-normal max-w-2xl leading-relaxed mb-10">
-                  We prepare reliable Financial Aspect computations so you can defend
-                  your Feasibility Study with confidence — reviewed, explained, and delivered on time.
-                </motion.p>
-
-                <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center gap-4 mb-16 w-full sm:w-auto">
-                  <button onClick={() => setCurrentView('dashboard')} className="w-full sm:w-auto bg-white hover:bg-slate-100 text-[#0B2F1D] font-black text-xs px-6 py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
-                    Book a Free 20-min Consultation
-                  </button>
-                  <a href="#services" className="w-full sm:w-auto bg-transparent hover:bg-white/5 text-white border border-white/30 font-bold text-xs px-6 py-4 rounded-xl transition-all flex items-center justify-center gap-2">
-                    View Services <span className="text-sm">→</span>
-                  </a>
-                </motion.div>
-
-                <motion.div variants={fadeInUp} className="w-full max-w-2xl grid grid-cols-3 gap-4 pt-8 border-t border-white/10 backdrop-blur-sm bg-white/5 rounded-2xl p-5">
-                  <div className="text-center">
-                    <h3 className="text-2xl md:text-3xl font-black text-white">100+</h3>
-                    <p className="text-[10px] font-bold text-emerald-300/80 uppercase tracking-wider mt-1.5">Students Served</p>
-                  </div>
-                  <div className="text-center border-x border-white/10">
-                    <h3 className="text-2xl md:text-3xl font-black text-white">5.0</h3>
-                    <p className="text-[10px] font-bold text-emerald-300/80 uppercase tracking-wider mt-1.5">Facebook Rating</p>
-                  </div>
-                  <div className="text-center">
-                    <h3 className="text-2xl md:text-3xl font-black text-white">Since 2019</h3>
-                    <p className="text-[10px] font-bold text-emerald-300/80 uppercase tracking-wider mt-1.5">Trusted Team</p>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </motion.section>
-
-            {/* Intro / who we are */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-              variants={fadeInUp}
-              className="w-full bg-[#FAF8F5]/80 backdrop-blur-sm text-[#0B2F1D] py-24 px-6 md:px-12 lg:px-16 select-none"
-            >
-              <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-5 flex flex-col justify-center w-full">
-                  <span className="text-[11px] font-extrabold tracking-widest text-[#205A3E] uppercase mb-3">HI THERE, FEASIBMATE</span>
-                  <h2 className="text-3xl md:text-[42px] font-sans font-black text-[#0B2F1D] leading-[1.12] tracking-tight mb-5">
-                    We help students <span className="text-[#205A3E] italic font-normal font-serif">defend</span> <br />
-                    their Feasibility Study with a <span className="text-[#D97706]">reliable</span> Financial Aspect.
-                  </h2>
-                  <p className="text-xs md:text-sm text-slate-800 leading-relaxed mb-3">
-                    We are <strong className="font-bold text-[#0B2F1D]">Feasib Accountant</strong>. Since 2019, we've quietly served over a hundred students from different schools across Luzon, Visayas, and Mindanao.
-                  </p>
-                  <div className="flex flex-wrap gap-2 items-center">
-                    <div className="bg-[#E6F4EA] text-[#137333] px-3 py-1 rounded-full text-[11px] font-bold">100+ Groups Served</div>
-                    <div className="bg-[#FEF7E0] text-[#B06000] px-3 py-1 rounded-full text-[11px] font-bold">5.0 Facebook Rating</div>
-                  </div>
-                </div>
-                <div className="lg:col-span-7 relative w-full flex justify-end items-center mt-4 lg:mt-0">
-                  <motion.div whileHover={{ scale: 1.02 }} className="w-full h-[360px] md:h-[420px] rounded-2xl overflow-hidden shadow-2xl border border-white/20">
-                    <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200" alt="Workspace" className="w-full h-full object-cover" />
-                  </motion.div>
-                </div>
-              </div>
-            </motion.section>
-
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.3 }}
-              variants={fadeInUp}
-              className="w-full bg-[#FAF8F5]/80 backdrop-blur-sm py-24 px-6 md:px-12"
-            >
-              <div className="max-w-4xl mx-auto text-center mb-12">
-                <h2 className="font-bold text-2xl md:text-3xl text-[#00450d] mb-4" style={{ fontFamily: "'Manrope', sans-serif" }}>
-                  Sample Financial Aspect
-                </h2>
-                <p className="text-[#41493e] text-sm md:text-base leading-relaxed">
-                  You might be wondering, what is it specifically that we are doing?
-                </p>
-                <p className="text-[#41493e] text-sm md:text-base leading-relaxed">
-                  To give you a short glimpse of our service, please watch the overview of our sample output.
-                </p>
-              </div>
-
-              <motion.section
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: false, amount: 0.3 }}
-                variants={fadeInUp}
-                className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl bg-[#0b2e02]/90 backdrop-blur-md border border-white/10 relative cursor-pointer group"
-              >      
-                <div className="relative h-[420px] md:h-[480px] bg-gradient-to-b from-[#10190f] via-[#0b1310] to-[#05100a] flex flex-col items-center justify-center px-6 md:px-10 pt-10 pb-16">
-                  <svg className="absolute left-6 bottom-10 w-14 h-20 opacity-70" viewBox="0 0 60 90" fill="none">
-                    <path d="M30 90 L30 40" stroke="#79b669" strokeWidth="3" />
-                    <path d="M30 55 C10 45, 5 25, 15 10" stroke="#79b669" strokeWidth="3" fill="none" />
-                    <path d="M30 50 C50 40, 55 20, 45 5" stroke="#79b669" strokeWidth="3" fill="none" />
-                    <path d="M30 62 C15 58, 8 48, 12 35" stroke="#acf4a4" strokeWidth="3" fill="none" />
-                    <rect x="18" y="72" width="24" height="18" rx="2" fill="#41493e" />
-                  </svg>
-
-                  <div className="relative w-full max-w-2xl rounded-lg overflow-hidden border-4 border-[#181c1b]/50 shadow-2xl bg-[#0d1a10]/80 backdrop-blur-sm">
-                    <div className="flex items-center justify-between px-4 py-2 bg-[#181c1b]/80 backdrop-blur-sm">
-                      <span className="text-[9px] font-bold text-[#79b669] tracking-wide" style={{ fontFamily: "'Manrope', sans-serif" }}>Feasib</span>
-                      <div className="flex gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#79b669]" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                        <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3 p-4 md:p-5">
-                      <div className="hidden sm:flex flex-col gap-1.5 w-16 shrink-0">
-                        {[100, 70, 85, 55].map((w, i) => (
-                          <div key={i} className="h-2 rounded-full bg-white/10" style={{ width: `${w}%` }} />
-                        ))}
-                      </div>
-
-                      <div className="flex-1 flex items-end gap-1.5 h-32 md:h-40">
-                        {chartBars.map((h, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 rounded-t-sm bg-gradient-to-t from-[#104502] to-[#acf4a4]"
-                            style={{ height: `${h}%` }}
-                          />
-                        ))}
-                      </div>
-
-                      <div className="hidden md:flex flex-col gap-1.5 w-20 shrink-0">
-                        {[1, 2, 3, 4].map((row) => (
-                          <div key={row} className="h-2 rounded-full bg-white/10" />
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="w-16 h-4 bg-[#181c1b]/80 backdrop-blur-sm mt-1 rounded-b-sm" />
-                  <div className="w-32 h-2 bg-[#181c1b]/80 backdrop-blur-sm rounded-full mt-1" />
-
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-16 h-16 rounded-2xl bg-[#c8503a]/60 backdrop-blur-md flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:bg-[#c8503a]/80 transition-all">
-                      <div className="w-0 h-0 border-y-[10px] border-y-transparent border-l-[16px] border-l-white ml-1.5" />
-                    </div>
-                  </div>
-                </div>
-              </motion.section>
-
-              <div className="max-w-3xl mx-auto text-center mt-14 space-y-4">
-                <p className="text-[#414944] text-lg leading-relaxed">
-                  Comprehensive financial modeling tailored for academic and professional excellence.
-                </p>
-                <p className="text-[#6e726e] text-2xl font-medium leading-relaxed">
-                  Since 2019, we already served over a hundred students from different schools, including
-                  some well-known universities.
-                </p>
-              </div>
-            </motion.section>
-
-            {/* Services accordion */}
-            <motion.section
-              id="services"
-              className="w-full bg-white/10 backdrop-blur-md text-[#0B2F1D] pt-24 pb-24 px-6 md:px-12 lg:px-16 border-t border-white/20 relative"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.1 }}
-              variants={staggerContainer}
-            >
-              <div className="max-w-7xl mx-auto">
-                <motion.div variants={fadeInUp} className="text-center max-w-2xl mx-auto mb-16">
-                  <span className="text-[11px] font-extrabold tracking-widest text-[#205A3E] uppercase block mb-3">SERVICES OFFERED</span>
-                  <h2 className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight mb-4">Every financial deliverable your panel will ask about.</h2>
-                  <p className="text-xs md:text-sm text-slate-200">Click any service to expand and see the full list of inclusions.</p>
-                </motion.div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-start">
-                  {servicesData.map((service) => (
-                    <motion.div
-                      key={service.id}
-                      onClick={() => toggleAccordion(service.id)}
-                      variants={fadeInUp}
-                      whileHover={{ y: -8, scale: 1.02 }}
-                      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 cursor-pointer shadow-xl transition-all group"
-                    >
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <span className="text-[10px] font-black text-white/60 block mb-1">0{service.id}</span>
-                          <h3 className="text-[15px] font-black text-white group-hover:text-emerald-300 leading-tight">{service.title}</h3>
-                        </div>
-                        <div className="text-2xl text-white/60 font-light transition-transform duration-300">
-                          {activeAccordion === service.id ? '−' : '+'}
-                        </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {activeAccordion === service.id && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-4 pt-4 border-t border-white/10">
-                              <ul className="space-y-2">
-                                {service.inclusions.map((item, idx) => (
-                                  <li key={idx} className="flex items-start gap-2 text-[11px] text-slate-200 font-medium">
-                                    <span className="text-emerald-400 mt-0.5">•</span>
-                                    {item}
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.section>
-
-            {/* Free Additional Services */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.2 }}
-              variants={staggerContainer}
-              className="w-full bg-[#00450d]/80 backdrop-blur-sm py-24 px-6 md:px-12 lg:px-16"
-            >
-              <div className="max-w-7xl mx-auto">
-                <motion.h2
-                  variants={fadeInUp}
-                  className="text-white font-black text-2xl md:text-3xl tracking-tight mb-3"
-                  style={{ fontFamily: "'Manrope', sans-serif" }}
-                >
-                  FREE ADDITIONAL SERVICES
-                </motion.h2>
-                <motion.p variants={fadeInUp} className="text-white/70 text-xs md:text-sm max-w-xl mb-12 leading-relaxed">
-                  Our commitment to helping students like you is not limited to the services above.
-                  Below are extra services to help you ace your defense — for FREE.
-                </motion.p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                  {freeServicesData.map((item, i) => (
-                    <motion.div
-                      key={i}
-                      variants={fadeInUp}
-                      whileHover={{ y: -6, scale: 1.02 }}
-                      className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 shadow-xl transition-all hover:bg-white/10"
-                    >
-                      <div className="mb-4">{item.icon}</div>
-                      <h3 className="text-white font-bold text-sm mb-2 leading-snug">{item.title}</h3>
-                      <p className="text-white/60 text-[11px] leading-relaxed">{item.desc}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.section>
-
-            {/* The Service Flow */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.2 }}
-              variants={staggerContainer}
-              className="w-full bg-[#f7faf7]/80 backdrop-blur-sm py-24 px-6 md:px-12 lg:px-16"
-            >
-              <div className="max-w-7xl mx-auto">
-                <motion.div variants={fadeInUp} className="mb-14">
-                  <h2
-                    className="text-[#00450d] font-black text-3xl md:text-5xl tracking-tight mb-4"
-                    style={{ fontFamily: "'Manrope', sans-serif" }}
-                  >
-                    The Service <span className="text-[#286b33]">Flow</span>
-                  </h2>
-                  <p className="text-[#41493e] text-sm md:text-base max-w-xl leading-relaxed">
-                    Guided by precision and clarity. Our 6-step engagement model ensures every
-                    financial output is defended by rigorous analysis and collaborative alignment.
-                  </p>
-                </motion.div>
-
-                {/* Condensed icon summary strip */}
-                <motion.div variants={fadeInUp} className="grid grid-cols-3 sm:grid-cols-6 gap-6 mb-16">
-                  {serviceFlowSteps.map((step) => (
-                    <div key={step.num} className="flex flex-col items-center text-center gap-2">
-                      <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-md border border-white/40 shadow-md flex items-center justify-center">
-                        {step.icon}
-                      </div>
-                      <p className="text-[#00450d] font-bold text-xs">{step.title}</p>
-                      <p className="text-[#6e726e] text-[10px]">{step.short}</p>
-                    </div>
-                  ))}
-                </motion.div>
-
-                {/* Horizontal auto-scroll / drag carousel */}
-                <motion.div variants={fadeInUp}>
-                  <ServiceFlowCarousel />
-                </motion.div>
-              </div>
-            </motion.section>
-
-            {/* AI & COURSE LIBRARY CARDS */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.2 }}
-              variants={staggerContainer}
-              className="w-full bg-[#f7faf7]/80 backdrop-blur-sm pb-24 px-6 md:px-12 lg:px-16"
-            >
-              <div className="max-w-7xl mx-auto">
-                <motion.div variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Left Card: AI Integrated */}
-                  <motion.div 
-                    variants={fadeInUp}
-                    whileHover={{ rotateX: 5, rotateY: 5, scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="relative bg-[#0f2310]/80 backdrop-blur-md rounded-2xl p-8 md:p-12 flex flex-col items-start justify-between min-h-[320px] border border-white/20 shadow-2xl overflow-hidden"
-                  >
-                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 mb-6">
-                      <span className="text-xs text-white/90">🤖 AI INTEGRATED</span>
-                    </div>
-                    <div className="max-w-md">
-                      <p className="text-[#8FA38F] text-sm leading-relaxed mb-8">
-                        Get instant answers to complex financial questions. Our AI is trained on local Philippine taxation and accounting laws.
-                      </p>
-                      <button className="bg-[#B3F0AE]/90 hover:bg-[#a2dda0] transition-colors text-[#0f2310] font-bold text-xs px-5 py-3 rounded-lg shadow-xl">
-                        Launch Assistant
-                      </button>
-                    </div>
-                    <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
-                  </motion.div>
-
-                  {/* Right Card: Course Library */}
-                  <motion.div 
-                    variants={fadeInUp}
-                    whileHover={{ rotateX: 5, rotateY: -5, scale: 1.02 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                    className="relative bg-[#2c6c33]/80 backdrop-blur-md rounded-2xl p-8 md:p-12 flex flex-col items-start justify-between min-h-[320px] border border-white/20 shadow-2xl overflow-hidden"
-                  >
-                    <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 mb-6">
-                      <span className="text-xs text-white/90">📚 LEARNING HUB</span>
-                    </div>
-                    <div className="max-w-md">
-                      <h3 className="text-white font-bold text-2xl mb-3 tracking-tight">Course Library</h3>
-                      <p className="text-[#C2DFC2] text-sm leading-relaxed mb-8">
-                        Master the art of feasibility. Access our curated library of video lessons, templates, and spreadsheets.
-                      </p>
-                      <button className="bg-white/90 hover:bg-white transition-colors text-[#0f2310] font-bold text-xs px-5 py-3 rounded-lg shadow-xl">
-                        Browse Courses
-                      </button>
-                    </div>
-                    <div className="absolute -right-16 -bottom-16 text-white/10 pointer-events-none">
-                      <svg width="120" height="120" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <polygon points="50,10 95,30 95,70 50,90 5,70 5,30" />
-                        <polygon points="50,25 80,40 80,60 50,75 20,60 20,40" fill="currentColor" fillOpacity="0.1" />
-                      </svg>
-                    </div>
-                  </motion.div>
-                </motion.div>
-              </div>
-            </motion.section>
-
-            {/* TESTIMONIALS */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.2 }}
-              variants={staggerContainer}
-              className="w-full bg-[#ecefec]/80 backdrop-blur-sm py-24 px-6 md:px-12 lg:px-16"
-            >
-              <div className="max-w-6xl mx-auto">
-                <motion.h2
-                  variants={fadeInUp}
-                  className="text-[#00450d] font-black text-2xl md:text-3xl text-center tracking-tight mb-14"
-                  style={{ fontFamily: "'Manrope', sans-serif" }}
-                >
-                  What Our Feasibmates Say
-                </motion.h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  {testimonialsData.map((t, i) => (
-                    <motion.div
-                      key={i}
-                      variants={fadeInUp}
-                      whileHover={{ y: -8, scale: 1.03 }}
-                      className="bg-white/20 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-8 flex flex-col gap-4 transition-transform"
-                    >
-                      <div className="flex gap-1 text-[#79b669] text-sm">
-                        {Array.from({ length: 5 }).map((_, s) => (
-                          <span key={s}>★</span>
-                        ))}
-                      </div>
-                      <p className="text-[#1f2d1f] italic text-sm leading-relaxed flex-1">"{t.quote}"</p>
-                      <div className="flex items-center gap-3 pt-2">
-                        <div className="w-10 h-10 rounded-full bg-[#104502]/80 backdrop-blur-sm text-white flex items-center justify-center font-bold text-xs shrink-0">
-                          {t.initials}
-                        </div>
-                        <div>
-                          <p className="text-[#181c1b] font-bold text-sm leading-tight">{t.name}</p>
-                          <p className="text-[#4a5c4a] text-xs">{t.role}</p>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.section>
-
-            {/* FAQ  */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.2 }}
-              variants={staggerContainer}
-              className="w-full bg-white/10 backdrop-blur-md py-24 px-6 md:px-12 lg:px-16"
-            >
-              <div className="max-w-7xl mx-auto">
-                <motion.h2
-                  variants={fadeInUp}
-                  className="text-white font-black text-2xl md:text-3xl text-center tracking-tight mb-14"
-                  style={{ fontFamily: "'Manrope', sans-serif" }}
-                >
-                  Frequently Asked Questions
-                </motion.h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
-                  {faqData.map((item, index) => (
-                    <motion.div
-                      key={index}
-                      variants={fadeInUp}
-                      onClick={() => toggleFAQ(index)}
-                      whileHover={{ rotateX: 3, rotateY: 3, scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 cursor-pointer shadow-2xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all"
-                    >
-                      <div className="flex justify-between items-center gap-4">
-                        <h3 className="text-white font-bold text-sm leading-snug">
-                          {item.question}
-                        </h3>
-                        <div className="text-xl text-white/70 font-light transition-transform duration-300 shrink-0">
-                          {activeFAQ === index ? '−' : '+'}
-                        </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {activeFAQ === index && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <p className="mt-4 pt-4 border-t border-white/10 text-slate-200 text-sm leading-relaxed">
-                              {item.answer}
-                            </p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ))}
-                </div>
-              </div>
-            </motion.section>
-
-            {/* FOOTER - GLASSIFIED */}
-            <motion.section
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: false, amount: 0.2 }}
-              variants={fadeInUp}
-              className="w-full bg-[#00450d]/80 backdrop-blur-md border-t border-white/10 py-16 px-6 md:px-12 lg:px-16"
-            >
-              <div className="max-w-7xl mx-auto flex flex-col items-center text-center">
-                <h2 className="text-white font-bold text-2xl md:text-3xl tracking-tight mb-10">
-                  Feasib Accountant
-                </h2>
-
-                <div className="flex flex-wrap justify-center gap-x-8 gap-y-4 mb-12 text-xs md:text-sm text-[#b3d1b3]">
-                  <a href="#" className="hover:text-white transition-colors">Home</a>
-                  <a href="#" className="hover:text-white transition-colors">Services Offered</a>
-                  <a href="#" className="hover:text-white transition-colors">Resources</a>
-                  <a href="#" className="hover:text-white transition-colors">Terms and Conditions</a>
-                  <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-                  <a href="#" className="hover:text-white transition-colors">About Us</a>
-                  <a href="#" className="hover:text-white transition-colors">Contact Us</a>
-                </div>
-
-                {/* Social Icons (FB, YT, LinkedIn) */}
-                <div className="flex gap-6 mb-10">
-                  {/* Facebook */}
-                  <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
-                    </svg>
-                  </a>
-                  
-                  {/* YouTube */}
-                  <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                    </svg>
-                  </a>
-
-                  {/* LinkedIn */}
-                  <a href="#" className="w-8 h-8 rounded-full border border-[#6d9e6d] flex items-center justify-center text-[#b3d1b3] hover:bg-[#b3d1b3] hover:text-[#00450d] transition-all">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-                      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                    </svg>
-                  </a>
-                </div>
-
-                <p className="text-[#b3d1b3] text-xs leading-relaxed max-w-2xl">
-                  &copy; 2024 Feasib Accountant. All rights reserved. We are here to help you have your Feasibility Study DEFENDED. Should need any help, contact our support team.
-                </p>
-              </div>
-            </motion.section>
-
-          </motion.div>
-        )}
-  
-        {/* 2. LOGIN / ROLE SELECTION */}
-        {currentView === 'login' && (
-          <LoginRoleSelect setCurrentView={setCurrentView} />
-        )}
-
-        {/* 3. CLIENT DASHBOARD */}
-        {currentView === 'dashboard' && (
-          <motion.div key="dashboard-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <ClientDashboard onBack={() => setCurrentView('landing')} />
-          </motion.div>
-        )}
-
-        {/* 4. ADMIN DASHBOARD */}
-        {currentView === 'admin' && (
-          <motion.div key="admin-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <AdminDashboard onSignOut={() => setCurrentView('landing')} />
-          </motion.div>
-        )}
-
-      </AnimatePresence>
-    </div>
+    <Router>
+      <AppContent />
+    </Router>
   );
 }
