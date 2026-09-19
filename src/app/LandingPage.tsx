@@ -1,242 +1,48 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Variants } from 'framer-motion';
+import { fadeInUp, fadeIn, staggerContainer } from '../lib/animations';
+import {
+  chartBars,
+  servicesData,
+  freeServicesData,
+  serviceFlowSteps,
+  testimonialsData,
+  faqData,
+} from '../lib/constants';
 
-// --- Data and Constants ---
-const chartBars = [22, 34, 28, 45, 38, 52, 60, 55, 70, 66, 82, 90];
 
-const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] }
-  }
-};
-
-const staggerContainer: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.12 }
-  }
-};
-
-const fadeIn: Variants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { duration: 1 } }
-};
-
-const servicesData = [
-  {
-    id: 1,
-    title: "Financial Assumption",
-    inclusions: ["General Assumptions", "Asset Assumptions", "Liability Assumptions", "Equity Assumptions", "Revenue Assumptions", "Expense Assumptions"]
-  },
-  {
-    id: 2,
-    title: "Projected Financial Statements",
-    inclusions: ["Statement of Financial Position / Balance Sheet", "Statement of Comprehensive Income / Income Statement / Profit and Loss Statement", "Statement of Cash Flows", "Statement of Changes in Equity"]
-  },
-  {
-    id: 3,
-    title: "Notes to the Financial Statements",
-    inclusions: ["Notes for Income Statement Accounts", "Notes for Balance Sheet Accounts", "Notes for Cash Flow"]
-  },
-  {
-    id: 4,
-    title: "Initial Capital Requirement",
-    inclusions: ["Capital Expenditures", "Initial Working Capital", "Pre-Operating Expenses"]
-  },
-  {
-    id: 5,
-    title: "Employee's Payroll",
-    inclusions: ["Employee Salary", "Employee Benefits", "13th Month Pay", "SSS Contribution", "PhilHealth Contribution", "Pag-IBIG Contribution", "De Minimis Benefits"]
-  },
-  {
-    id: 6,
-    title: "Financial Ratios",
-    inclusions: ["Liquidity Ratio", "Efficiency Ratio", "Solvency Ratio", "Profitability Ratio"]
-  },
-  {
-    id: 7,
-    title: "Cost-Volume-Profit Analysis",
-    inclusions: ["Break-Even Point Analysis", "Sensitivity Analysis"]
-  },
-  {
-    id: 8,
-    title: "Capital Budgeting (Time Value of Money)",
-    inclusions: ["Discounted Payback Period", "Undiscounted Payback Period", "Net Present Value", "Profitability Index", "Internal Rate of Return"]
-  },
-  {
-    id: 9,
-    title: "Feasibility Study Assistance (Other than Financial)",
-    inclusions: ["Survey Questionnaire Writing and/or Validation", "Demand and Supply Analysis", "Assistance to non-financial-related chapters of the study", "Slide Presentations", "English Grammar and Plagiarism Checking"]
-  }
+const freeServiceIcons = [
+  
+  <svg key="0" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+    <rect x="3" y="4" width="18" height="13" rx="2" stroke="#79b669" strokeWidth="1.6" />
+    <path d="M8 21h8M12 17v4" stroke="#79b669" strokeWidth="1.6" strokeLinecap="round" />
+  </svg>,
+  
+  <svg key="1" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+    <path d="M4 20l1.2-4.2L16 5a2 2 0 0 1 3 3L8.2 18.8 4 20Z" stroke="#79b669" strokeWidth="1.6" strokeLinejoin="round" />
+  </svg>,
+  
+  <svg key="2" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+    <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" stroke="#79b669" strokeWidth="1.6" strokeLinejoin="round" />
+  </svg>,
+  
+  <svg key="3" viewBox="0 0 24 24" fill="none" className="w-5 h-5">
+    <path d="M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM15 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20c.5-2.7 2.6-4.5 6-4.5S14.5 17.3 15 20M12 20c.5-2.7 2.6-4.5 5-4.5" stroke="#79b669" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>,
 ];
 
-const freeServicesData = [
-  {
-    title: "Financial Aspect Walkthrough",
-    desc: "A thorough explanation of how the output was computed/prepared. This will be done via MS Teams meeting and is recorded for the clients to rewatch as needed.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <rect x="3" y="4" width="18" height="13" rx="2" stroke="#79b669" strokeWidth="1.6" />
-        <path d="M8 21h8M12 17v4" stroke="#79b669" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    title: "Revisions",
-    desc: "No charge for any minor revisions before and after the defense, given that it has not been repeatedly revised. Please refer to the revision policy for more details.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M4 20l1.2-4.2L16 5a2 2 0 0 1 3 3L8.2 18.8 4 20Z" stroke="#79b669" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    )
-  },
-  {
-    title: "Feasibility Study Consultation",
-    desc: "Check and review your papers for any commonly revised items, then suggest the necessary corrections. Give some advice on how to ace their defense.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" stroke="#79b669" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    )
-  },
-  {
-    title: "Other Assistance",
-    desc: "Assistance for other matters may vary depending on the service availed. Please refer to the pricing terms and conditions for more details.",
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M9 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM15 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 20c.5-2.7 2.6-4.5 6-4.5S14.5 17.3 15 20M12 20c.5-2.7 2.6-4.5 5-4.5" stroke="#79b669" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
+
+const serviceFlowIcons = [
+  <svg key="0" viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" stroke="#104502" strokeWidth="1.6" strokeLinejoin="round" /></svg>,
+  <svg key="1" viewBox="0 0 24 24" fill="none" className="w-5 h-5"><rect x="2" y="6" width="20" height="13" rx="2" stroke="#104502" strokeWidth="1.6" /><circle cx="12" cy="12.5" r="3" stroke="#104502" strokeWidth="1.6" /></svg>,
+  <svg key="2" viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="#104502" strokeWidth="1.6" strokeLinejoin="round" /><path d="M13 6l4 4" stroke="#104502" strokeWidth="1.6" /></svg>,
+  <svg key="3" viewBox="0 0 24 24" fill="none" className="w-5 h-5"><circle cx="8" cy="9" r="3" stroke="#104502" strokeWidth="1.6" /><circle cx="16" cy="9" r="3" stroke="#104502" strokeWidth="1.6" /><path d="M2 20c.6-3 3-5 6-5s5.4 2 6 5M12 20c.5-2.6 2.4-4.5 5-5" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" /></svg>,
+  <svg key="4" viewBox="0 0 24 24" fill="none" className="w-5 h-5"><rect x="4" y="3" width="16" height="18" rx="2" stroke="#104502" strokeWidth="1.6" /><path d="M8 8h8M8 12h8M8 16h4" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" /></svg>,
+  <svg key="5" viewBox="0 0 24 24" fill="none" className="w-5 h-5"><path d="M3 12a9 9 0 1 1 3 6.7" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" /><path d="M3 18v-4h4" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>,
 ];
 
-const serviceFlowSteps = [
-  {
-    num: '01',
-    title: 'Inquiry',
-    short: 'Discuss your needs',
-    desc: 'To clarify what outputs do you need and its requirements. Our team will check and review your available data as needed. Read and agree to our service terms and conditions.',
-    image: 'Inquiryimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5c-1.4 0-2.7-.3-3.9-.9L3 20l1.1-5.4A8.5 8.5 0 1 1 21 11.5Z" stroke="#104502" strokeWidth="1.6" strokeLinejoin="round" />
-      </svg>
-    )
-  },
-  {
-    num: '02',
-    title: 'Initial Payment',
-    short: 'Downpayment lock-in',
-    desc: 'Once confirmed and accepted by the team, 50% down payment should be settled.',
-    image: 'Initialpaymentimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <rect x="2" y="6" width="20" height="13" rx="2" stroke="#104502" strokeWidth="1.6" />
-        <circle cx="12" cy="12.5" r="3" stroke="#104502" strokeWidth="1.6" />
-      </svg>
-    )
-  },
-  {
-    num: '03',
-    title: 'Document Preparation',
-    short: 'Drafting your file',
-    desc: 'Once the necessary data has been sent and the down payment has been settled, assigned preparer will start the output. Our team will provide estimated time of completion for the draft output.',
-    image: 'Documentpreparationimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M4 20h4l10-10-4-4L4 16v4Z" stroke="#104502" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M13 6l4 4" stroke="#104502" strokeWidth="1.6" />
-      </svg>
-    )
-  },
-  {
-    num: '04',
-    title: 'ConsultationMeeting',
-    short: 'Progress review',
-    desc: 'After preparation of the draft output, you/your group will be scheduled for a meeting to finalize and explain the output.',
-    image: 'Consultationmeetingimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <circle cx="8" cy="9" r="3" stroke="#104502" strokeWidth="1.6" />
-        <circle cx="16" cy="9" r="3" stroke="#104502" strokeWidth="1.6" />
-        <path d="M2 20c.6-3 3-5 6-5s5.4 2 6 5M12 20c.5-2.6 2.4-4.5 5-5" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    num: '05',
-    title: 'Final Payment',
-    short: 'Balance clearance',
-    desc: 'After the meeting, the finalized output and the recording will be sent by our team. Once the file is received, the payment balance should be settled.',
-    image: 'Finalpaymentimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <rect x="4" y="3" width="16" height="18" rx="2" stroke="#104502" strokeWidth="1.6" />
-        <path d="M8 8h8M8 12h8M8 16h4" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    )
-  },
-  {
-    num: '06',
-    title: 'Revisions',
-    short: 'Final adjustments',
-    desc: "Just message our page for any revisions, if there's any. Revisions may or may not be conducted during a meeting, subject to agreement of both parties.",
-    image: 'Revisionimage.png',
-    icon: (
-      <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5">
-        <path d="M3 12a9 9 0 1 1 3 6.7" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M3 18v-4h4" stroke="#104502" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    )
-  }
-];
 
-const testimonialsData = [
-  {
-    name: "Ma. Cristina Reyes",
-    role: "Business Admin Student",
-    quote: "Their feasibility work is so detailed. My panel was impressed with the sensitivity analysis!",
-    initials: "CR"
-  },
-  {
-    name: "Robert Santos",
-    role: "SME Owner",
-    quote: "The BIR tax mapping saved my business from penalties. Very professional and worth every cent.",
-    initials: "RS"
-  },
-  {
-    name: "Kevin Dela Cruz",
-    role: "MBA Graduate",
-    quote: "I recommend them for anyone struggling with financial forecasting. They make it simple to understand.",
-    initials: "KD"
-  }
-];
-
-const faqData = [
-  {
-    question: "How long does a feasibility study take?",
-    answer: "The timeline depends on the complexity of your study and the availability of your data. On average, it takes about 1 to 2 weeks for the initial draft, followed by a consultation meeting and final revisions."
-  },
-  {
-    question: "Can you help with BIR registration?",
-    answer: "We focus primarily on the Financial Aspect computations for feasibility studies. However, if you need non-financial assistance like BIR registration guidelines, we can point you to the right resources."
-  },
-  {
-    question: "Do you provide the Excel files?",
-    answer: "Yes! We provide the finalized Financial Aspect in both PDF format for submission and the raw Excel files so you can see the formulas and data sources behind the computations."
-  },
-  {
-    question: "What are your payment terms?",
-    answer: "We require a 50% downpayment to lock in your slot and begin drafting. The remaining 50% balance is due once the final output has been presented and approved during the consultation meeting."
-  }
-];
-
-// --- Helper Carousel Component ---
 function ServiceFlowCarousel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const pausedRef = useRef(false);
@@ -255,9 +61,7 @@ function ServiceFlowCarousel() {
       if (!pausedRef.current && !draggingRef.current) {
         el.scrollLeft += speed;
         const singleSetWidth = el.scrollWidth / 2;
-        if (el.scrollLeft >= singleSetWidth) {
-          el.scrollLeft -= singleSetWidth;
-        }
+        if (el.scrollLeft >= singleSetWidth) el.scrollLeft -= singleSetWidth;
       }
       raf = requestAnimationFrame(tick);
     };
@@ -267,9 +71,7 @@ function ServiceFlowCarousel() {
 
   const scheduleResume = () => {
     if (resumeTimeout.current) clearTimeout(resumeTimeout.current);
-    resumeTimeout.current = setTimeout(() => {
-      pausedRef.current = false;
-    }, 1200);
+    resumeTimeout.current = setTimeout(() => { pausedRef.current = false; }, 1200);
   };
 
   const onPointerDown = (e: React.PointerEvent) => {
@@ -277,12 +79,11 @@ function ServiceFlowCarousel() {
     if (!el) return;
     pausedRef.current = true;
     if (resumeTimeout.current) clearTimeout(resumeTimeout.current);
-
     if (e.pointerType === 'mouse') {
       draggingRef.current = true;
       startXRef.current = e.clientX;
       startScrollRef.current = el.scrollLeft;
-      try { el.setPointerCapture(e.pointerId); } catch {}
+      try { el.setPointerCapture(e.pointerId); } catch { /* no-op */ }
     }
   };
 
@@ -290,15 +91,23 @@ function ServiceFlowCarousel() {
     if (!draggingRef.current) return;
     const el = scrollRef.current;
     if (!el) return;
-    const delta = e.clientX - startXRef.current;
-    el.scrollLeft = startScrollRef.current - delta;
+    el.scrollLeft = startScrollRef.current - (e.clientX - startXRef.current);
   };
 
   const endDrag = (e: React.PointerEvent) => {
     if (draggingRef.current && scrollRef.current) {
-      try { scrollRef.current.releasePointerCapture(e.pointerId); } catch {}
+      try { scrollRef.current.releasePointerCapture(e.pointerId); } catch { /* no-op */ }
     }
     draggingRef.current = false;
+    scheduleResume();
+  };
+
+  const scrollCards = (direction: 1 | -1) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    pausedRef.current = true;
+    if (resumeTimeout.current) clearTimeout(resumeTimeout.current);
+    el.scrollBy({ left: direction * Math.min(344, el.clientWidth * 0.82), behavior: 'smooth' });
     scheduleResume();
   };
 
@@ -306,12 +115,33 @@ function ServiceFlowCarousel() {
 
   return (
     <div className="relative">
-      <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-r from-[#f7faf7] to-transparent" />
-      <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-10 bg-gradient-to-l from-[#f7faf7] to-transparent" />
+      <button
+        type="button"
+        aria-label="Show previous service steps"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={() => scrollCards(-1)}
+        className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-[#0B2F1D]/15 text-[#0B2F1D] shadow-lg hover:bg-white hover:-translate-y-1/2 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#205A3E] transition"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5 mx-auto" aria-hidden="true">
+          <path d="m14 6-6 6 6 6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        aria-label="Show next service steps"
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={() => scrollCards(1)}
+        className="absolute right-3 md:right-5 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/90 backdrop-blur-md border border-[#0B2F1D]/15 text-[#0B2F1D] shadow-lg hover:bg-white hover:-translate-y-1/2 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-[#205A3E] transition"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="w-5 h-5 mx-auto" aria-hidden="true">
+          <path d="m10 6 6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
 
       <div
         ref={scrollRef}
-        className="flex gap-6 overflow-x-auto cursor-grab active:cursor-grabbing select-none [&::-webkit-scrollbar]:hidden"
+        className="service-flow-viewport flex gap-6 overflow-x-auto cursor-grab active:cursor-grabbing select-none [&::-webkit-scrollbar]:hidden"
         style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
@@ -326,13 +156,9 @@ function ServiceFlowCarousel() {
             className="shrink-0 w-[280px] md:w-[320px] bg-white/70 backdrop-blur-md border border-white/50 rounded-2xl shadow-xl overflow-hidden select-none"
           >
             <div className="h-36 bg-gradient-to-br from-[#c9d8c8] via-[#e6ede5] to-[#dfe8dd] relative overflow-hidden">
-              {step.image ? (
-                <img 
-                  src={step.image} 
-                  alt={step.title} 
-                  className="w-full h-full object-cover" 
-                />
-              ) : null}
+              {step.image && (
+                <img src={step.image} alt={step.title} className="w-full h-full object-cover" />
+              )}
             </div>
             <div className="p-6">
               <span className="block text-3xl font-semibold text-[#00450d]/15 leading-none mb-2">{step.num}</span>
@@ -346,26 +172,68 @@ function ServiceFlowCarousel() {
   );
 }
 
-// --- MAIN LANDING PAGE EXPORT ---
+
 export default function LandingPage() {
+  const navigate = useNavigate();
   const [activeAccordion, setActiveAccordion] = useState<number | null>(null);
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
 
-  const toggleAccordion = (index: number) => {
+  const toggleAccordion = (index: number) =>
     setActiveAccordion(activeAccordion === index ? null : index);
-  };
 
-  const toggleFAQ = (index: number) => {
+  const renderServiceCard = (service: (typeof servicesData)[number]) => (
+    <motion.div
+      key={service.id}
+      onClick={() => toggleAccordion(service.id)}
+      variants={fadeInUp}
+      whileHover={{ y: -8, scale: 1.02 }}
+      className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 cursor-pointer shadow-xl transition-all group"
+    >
+      <div className="flex justify-between items-center">
+        <div>
+          <span className="text-[10px] font-black text-white/60 block mb-1">
+            {String(service.id).padStart(2, '0')}
+          </span>
+          <h3 className="text-[15px] font-black text-white group-hover:text-emerald-300 leading-tight">{service.title}</h3>
+        </div>
+        <div className="text-2xl text-white/60 font-light transition-transform duration-300">
+          {activeAccordion === service.id ? 'âˆ’' : '+'}
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {activeAccordion === service.id && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-4 pt-4 border-t border-white/10">
+              <ul className="space-y-2">
+                {service.inclusions.map((item, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-[11px] text-slate-200 font-medium">
+                    <span className="text-emerald-400 mt-0.5">â€¢</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+
+  const toggleFAQ = (index: number) =>
     setActiveFAQ(activeFAQ === index ? null : index);
-  };
+
+  void renderServiceCard;
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, x: -20 }}
-    >
-      {/* Hero */}
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, x: -20 }}>
+
+      
       <motion.section
         id="home"
         initial="hidden"
@@ -374,13 +242,23 @@ export default function LandingPage() {
         className="relative min-h-screen flex flex-col justify-between text-white overflow-hidden bg-[#0B2F1D]"
       >
         <motion.div variants={fadeIn} className="absolute inset-0 z-0">
-          <video autoPlay loop muted playsInline className="w-full h-full object-cover opacity-100">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            poster="landingvid-poster.jpg"
+            className="w-full h-full object-cover opacity-100"
+          >
             <source src="landingvid.mp4" type="video/mp4" />
           </video>
         </motion.div>
         <div className="absolute inset-0 bg-gradient-to-b from-[#0B2F1D]/80 via-transparent to-[#0B2F1D] pointer-events-none z-10" />
 
-        <motion.div variants={staggerContainer} className="relative z-20 max-w-4xl mx-auto px-6 text-center pt-32 pb-12 flex-1 flex flex-col justify-center items-center">
+        <motion.div
+          variants={staggerContainer}
+          className="relative z-20 max-w-4xl mx-auto px-6 text-center pt-6 md:pt-8 pb-12 flex-1 flex flex-col justify-start items-center"
+        >
           <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-1.5 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
             <span className="text-[10px] font-bold tracking-widest text-emerald-300 uppercase">YOUR STUDY, OUR STRATEGY.</span>
@@ -396,10 +274,16 @@ export default function LandingPage() {
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center gap-4 mb-16 w-full sm:w-auto">
-            <button className="w-full sm:w-auto bg-white hover:bg-slate-100 text-[#0B2F1D] font-black text-xs px-6 py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+            <button
+              onClick={() => document.getElementById('services')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full sm:w-auto bg-white hover:bg-slate-100 text-[#0B2F1D] font-black text-xs px-6 py-4 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+            >
               Book a Free 20-min Consultation
             </button>
-            <a href="#services" className="w-full sm:w-auto bg-transparent hover:bg-white/5 text-white border border-white/30 font-bold text-xs px-6 py-4 rounded-xl transition-all flex items-center justify-center gap-2">
+            <a
+              href="#services"
+              className="w-full sm:w-auto bg-transparent hover:bg-white/5 text-white border border-white/30 font-bold text-xs px-6 py-4 rounded-xl transition-all flex items-center justify-center gap-2"
+            >
               View Services <span className="text-sm">→</span>
             </a>
           </motion.div>
@@ -421,7 +305,7 @@ export default function LandingPage() {
         </motion.div>
       </motion.section>
 
-      {/* Intro / who we are */}
+     
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -446,13 +330,17 @@ export default function LandingPage() {
           </div>
           <div className="lg:col-span-7 relative w-full flex justify-end items-center mt-4 lg:mt-0">
             <motion.div whileHover={{ scale: 1.02 }} className="w-full h-[360px] md:h-[420px] rounded-2xl overflow-hidden shadow-2xl border border-white/20">
-              <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200" alt="Workspace" className="w-full h-full object-cover" />
+              <img
+                src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=1200"
+                alt="Workspace"
+                className="w-full h-full object-cover"
+              />
             </motion.div>
           </div>
         </div>
       </motion.section>
 
-      {/* Sample Financial Aspect */}
+      
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -461,9 +349,7 @@ export default function LandingPage() {
         className="w-full bg-[#FAF8F5]/80 backdrop-blur-sm py-24 px-6 md:px-12"
       >
         <div className="max-w-4xl mx-auto text-center mb-12">
-          <h2 className="font-bold text-2xl md:text-3xl text-[#00450d] mb-4" style={{ fontFamily: "'Manrope', sans-serif" }}>
-            Sample Financial Aspect
-          </h2>
+          <h2 className="font-bold text-2xl md:text-3xl text-[#00450d] mb-4">Sample Financial Aspect</h2>
           <p className="text-[#41493e] text-sm md:text-base leading-relaxed">
             You might be wondering, what is it specifically that we are doing?
           </p>
@@ -478,7 +364,7 @@ export default function LandingPage() {
           viewport={{ once: false, amount: 0.3 }}
           variants={fadeInUp}
           className="max-w-4xl mx-auto rounded-2xl overflow-hidden shadow-2xl bg-[#0b2e02]/90 backdrop-blur-md border border-white/10 relative cursor-pointer group"
-        >      
+        >
           <div className="relative h-[420px] md:h-[480px] bg-gradient-to-b from-[#10190f] via-[#0b1310] to-[#05100a] flex flex-col items-center justify-center px-6 md:px-10 pt-10 pb-16">
             <svg className="absolute left-6 bottom-10 w-14 h-20 opacity-70" viewBox="0 0 60 90" fill="none">
               <path d="M30 90 L30 40" stroke="#79b669" strokeWidth="3" />
@@ -490,7 +376,7 @@ export default function LandingPage() {
 
             <div className="relative w-full max-w-2xl rounded-lg overflow-hidden border-4 border-[#181c1b]/50 shadow-2xl bg-[#0d1a10]/80 backdrop-blur-sm">
               <div className="flex items-center justify-between px-4 py-2 bg-[#181c1b]/80 backdrop-blur-sm">
-                <span className="text-[9px] font-bold text-[#79b669] tracking-wide" style={{ fontFamily: "'Manrope', sans-serif" }}>Feasib</span>
+                <span className="text-[9px] font-bold text-[#79b669] tracking-wide">Feasib</span>
                 <div className="flex gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#79b669]" />
                   <span className="w-1.5 h-1.5 rounded-full bg-white/20" />
@@ -545,7 +431,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* Services accordion */}
+    
       <motion.section
         id="services"
         className="w-full bg-white/10 backdrop-blur-md text-[#0B2F1D] pt-24 pb-24 px-6 md:px-12 lg:px-16 border-t border-white/20 relative"
@@ -556,7 +442,7 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto">
           <motion.div variants={fadeInUp} className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-[11px] font-extrabold tracking-widest text-[#205A3E] uppercase block mb-3">SERVICES OFFERED</span>
+            <span className="text-[11px] font-extrabold tracking-widest text-emerald-200 uppercase block mb-3 drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]">SERVICES OFFERED</span>
             <h2 className="text-3xl md:text-5xl font-sans font-black text-white tracking-tight mb-4">Every financial deliverable your panel will ask about.</h2>
             <p className="text-xs md:text-sm text-slate-200">Click any service to expand and see the full list of inclusions.</p>
           </motion.div>
@@ -572,7 +458,9 @@ export default function LandingPage() {
               >
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-[10px] font-black text-white/60 block mb-1">0{service.id}</span>
+                    <span className="text-[10px] font-black text-white/60 block mb-1">
+                      {String(service.id).padStart(2, '0')}
+                    </span>
                     <h3 className="text-[15px] font-black text-white group-hover:text-emerald-300 leading-tight">{service.title}</h3>
                   </div>
                   <div className="text-2xl text-white/60 font-light transition-transform duration-300">
@@ -607,7 +495,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* Free Additional Services */}
+      
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -616,11 +504,7 @@ export default function LandingPage() {
         className="w-full bg-[#00450d]/80 backdrop-blur-sm py-24 px-6 md:px-12 lg:px-16"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.h2
-            variants={fadeInUp}
-            className="text-white font-black text-2xl md:text-3xl tracking-tight mb-3"
-            style={{ fontFamily: "'Manrope', sans-serif" }}
-          >
+          <motion.h2 variants={fadeInUp} className="text-white font-black text-2xl md:text-3xl tracking-tight mb-3">
             FREE ADDITIONAL SERVICES
           </motion.h2>
           <motion.p variants={fadeInUp} className="text-white/70 text-xs md:text-sm max-w-xl mb-12 leading-relaxed">
@@ -636,7 +520,7 @@ export default function LandingPage() {
                 whileHover={{ y: -6, scale: 1.02 }}
                 className="bg-white/5 backdrop-blur-md border border-white/10 rounded-xl p-6 shadow-xl transition-all hover:bg-white/10"
               >
-                <div className="mb-4">{item.icon}</div>
+                <div className="mb-4">{freeServiceIcons[i]}</div>
                 <h3 className="text-white font-bold text-sm mb-2 leading-snug">{item.title}</h3>
                 <p className="text-white/60 text-[11px] leading-relaxed">{item.desc}</p>
               </motion.div>
@@ -645,7 +529,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* The Service Flow */}
+      
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -655,10 +539,7 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto">
           <motion.div variants={fadeInUp} className="mb-14">
-            <h2
-              className="text-[#00450d] font-black text-3xl md:text-5xl tracking-tight mb-4"
-              style={{ fontFamily: "'Manrope', sans-serif" }}
-            >
+            <h2 className="text-[#00450d] font-black text-3xl md:text-5xl tracking-tight mb-4">
               The Service <span className="text-[#286b33]">Flow</span>
             </h2>
             <p className="text-[#41493e] text-sm md:text-base max-w-xl leading-relaxed">
@@ -668,10 +549,10 @@ export default function LandingPage() {
           </motion.div>
 
           <motion.div variants={fadeInUp} className="grid grid-cols-3 sm:grid-cols-6 gap-6 mb-16">
-            {serviceFlowSteps.map((step) => (
+            {serviceFlowSteps.map((step, i) => (
               <div key={step.num} className="flex flex-col items-center text-center gap-2">
                 <div className="w-12 h-12 rounded-xl bg-white/50 backdrop-blur-md border border-white/40 shadow-md flex items-center justify-center">
-                  {step.icon}
+                  {serviceFlowIcons[i]}
                 </div>
                 <p className="text-[#00450d] font-bold text-xs">{step.title}</p>
                 <p className="text-[#6e726e] text-[10px]">{step.short}</p>
@@ -685,7 +566,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* AI & COURSE LIBRARY CARDS */}
+     
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -695,43 +576,51 @@ export default function LandingPage() {
       >
         <div className="max-w-7xl mx-auto">
           <motion.div variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Left Card: AI Integrated */}
-            <motion.div 
+            <motion.div
               variants={fadeInUp}
               whileHover={{ rotateX: 5, rotateY: 5, scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="relative bg-[#0f2310]/80 backdrop-blur-md rounded-2xl p-8 md:p-12 flex flex-col items-start justify-between min-h-[320px] border border-white/20 shadow-2xl overflow-hidden"
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              style={{ perspective: 800 }}
+              className="relative bg-gradient-to-br from-[#0a2818] via-[#13462a] to-[#0a1d13] rounded-2xl p-8 md:p-12 flex flex-col items-start justify-between min-h-[320px] border border-emerald-200/25 shadow-[0_28px_65px_rgba(5,30,17,0.35)] overflow-hidden"
             >
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 mb-6">
                 <span className="text-xs text-white/90">🤖 AI INTEGRATED</span>
               </div>
               <div className="max-w-md">
-                <p className="text-[#8FA38F] text-sm leading-relaxed mb-8">
+                <h3 className="text-white font-bold text-2xl mb-3 tracking-tight">Fina AI Assistant</h3>
+                <p className="text-emerald-100/85 text-sm leading-relaxed mb-8">
                   Get instant answers to complex financial questions. Our AI is trained on local Philippine taxation and accounting laws.
                 </p>
-                <button className="bg-[#B3F0AE]/90 hover:bg-[#a2dda0] transition-colors text-[#0f2310] font-bold text-xs px-5 py-3 rounded-lg shadow-xl">
+                <button
+                  onClick={() => navigate('/financial-tools')}
+                  className="bg-[#B3F0AE]/90 hover:bg-[#a2dda0] transition-colors text-[#0f2310] font-bold text-xs px-5 py-3 rounded-lg shadow-xl cursor-pointer"
+                >
                   Launch Assistant
                 </button>
               </div>
-              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-emerald-300/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute right-8 top-8 w-2 h-2 rounded-full bg-emerald-200 shadow-[0_0_18px_rgba(179,240,174,0.95)] pointer-events-none" />
             </motion.div>
 
-            {/* Right Card: Course Library */}
-            <motion.div 
+            <motion.div
               variants={fadeInUp}
               whileHover={{ rotateX: 5, rotateY: -5, scale: 1.02 }}
-              transition={{ type: "spring", stiffness: 300, damping: 20 }}
-              className="relative bg-[#2c6c33]/80 backdrop-blur-md rounded-2xl p-8 md:p-12 flex flex-col items-start justify-between min-h-[320px] border border-white/20 shadow-2xl overflow-hidden"
+              transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+              style={{ perspective: 800 }}
+              className="relative bg-gradient-to-br from-[#2c7438] via-[#428a4e] to-[#235d31] rounded-2xl p-8 md:p-12 flex flex-col items-start justify-between min-h-[320px] border border-emerald-100/30 shadow-[0_28px_65px_rgba(9,65,25,0.3)] overflow-hidden"
             >
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-3 py-1.5 mb-6">
                 <span className="text-xs text-white/90">📚 LEARNING HUB</span>
               </div>
               <div className="max-w-md">
                 <h3 className="text-white font-bold text-2xl mb-3 tracking-tight">Course Library</h3>
-                <p className="text-[#C2DFC2] text-sm leading-relaxed mb-8">
+                <p className="text-emerald-50/90 text-sm leading-relaxed mb-8">
                   Master the art of feasibility. Access our curated library of video lessons, templates, and spreadsheets.
                 </p>
-                <button className="bg-white/90 hover:bg-white transition-colors text-[#0f2310] font-bold text-xs px-5 py-3 rounded-lg shadow-xl">
+                <button
+                  onClick={() => navigate('/resources')}
+                  className="bg-white/90 hover:bg-white transition-colors text-[#0f2310] font-bold text-xs px-5 py-3 rounded-lg shadow-xl cursor-pointer"
+                >
                   Browse Courses
                 </button>
               </div>
@@ -741,12 +630,13 @@ export default function LandingPage() {
                   <polygon points="50,25 80,40 80,60 50,75 20,60 20,40" fill="currentColor" fillOpacity="0.1" />
                 </svg>
               </div>
+              <div className="absolute left-8 bottom-8 w-2 h-2 rounded-full bg-emerald-100 shadow-[0_0_18px_rgba(236,253,241,0.9)] pointer-events-none" />
             </motion.div>
           </motion.div>
         </div>
       </motion.section>
 
-      {/* TESTIMONIALS */}
+  
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -755,11 +645,7 @@ export default function LandingPage() {
         className="w-full bg-[#ecefec]/80 backdrop-blur-sm py-24 px-6 md:px-12 lg:px-16"
       >
         <div className="max-w-6xl mx-auto">
-          <motion.h2
-            variants={fadeInUp}
-            className="text-[#00450d] font-black text-2xl md:text-3xl text-center tracking-tight mb-14"
-            style={{ fontFamily: "'Manrope', sans-serif" }}
-          >
+          <motion.h2 variants={fadeInUp} className="text-[#00450d] font-black text-2xl md:text-3xl text-center tracking-tight mb-14">
             What Our Feasibmates Say
           </motion.h2>
 
@@ -772,9 +658,7 @@ export default function LandingPage() {
                 className="bg-white/20 backdrop-blur-md border border-white/40 rounded-xl shadow-2xl p-8 flex flex-col gap-4 transition-transform"
               >
                 <div className="flex gap-1 text-[#79b669] text-sm">
-                  {Array.from({ length: 5 }).map((_, s) => (
-                    <span key={s}>★</span>
-                  ))}
+                  {Array.from({ length: 5 }).map((_, s) => <span key={s}>★</span>)}
                 </div>
                 <p className="text-[#1f2d1f] italic text-sm leading-relaxed flex-1">"{t.quote}"</p>
                 <div className="flex items-center gap-3 pt-2">
@@ -792,7 +676,7 @@ export default function LandingPage() {
         </div>
       </motion.section>
 
-      {/* FAQ  */}
+      
       <motion.section
         initial="hidden"
         whileInView="visible"
@@ -801,28 +685,26 @@ export default function LandingPage() {
         className="w-full bg-white/10 backdrop-blur-md py-24 px-6 md:px-12 lg:px-16"
       >
         <div className="max-w-7xl mx-auto">
-          <motion.h2
-            variants={fadeInUp}
-            className="text-white font-black text-2xl md:text-3xl text-center tracking-tight mb-14"
-            style={{ fontFamily: "'Manrope', sans-serif" }}
-          >
+          <motion.h2 variants={fadeInUp} className="text-white font-black text-2xl md:text-3xl text-center tracking-tight mb-14">
             Frequently Asked Questions
           </motion.h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+          
+          <div
+            className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto"
+            style={{ perspective: 1000 }}
+          >
             {faqData.map((item, index) => (
               <motion.div
                 key={index}
                 variants={fadeInUp}
                 onClick={() => toggleFAQ(index)}
                 whileHover={{ rotateX: 3, rotateY: 3, scale: 1.02 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 20 }}
                 className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-5 cursor-pointer shadow-2xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.3)] transition-all"
               >
                 <div className="flex justify-between items-center gap-4">
-                  <h3 className="text-white font-bold text-sm leading-snug">
-                    {item.question}
-                  </h3>
+                  <h3 className="text-white font-bold text-sm leading-snug">{item.question}</h3>
                   <div className="text-xl text-white/70 font-light transition-transform duration-300 shrink-0">
                     {activeFAQ === index ? '−' : '+'}
                   </div>
@@ -847,6 +729,7 @@ export default function LandingPage() {
           </div>
         </div>
       </motion.section>
+
     </motion.div>
   );
 }

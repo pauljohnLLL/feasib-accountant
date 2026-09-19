@@ -22,9 +22,7 @@ export default function ClientDashboard({ onBack }: ClientDashboardProps) {
   const [activeSubTab, setActiveSubTab] = useState<ProjectSubTab>('chat')
   const { data: ledgerData, isLoading, error } = useLedgerEntries();
 
-  // Real, Supabase-backed, realtime chat — replaces the old local-only
-  // projectMessages state. `messages` updates automatically whenever
-  // anyone (client or admin) inserts a new row.
+
   const { messages: projectMessages, sendMessage } = useChat()
   const [projectInput, setProjectProjectInput] = useState('')
 
@@ -32,7 +30,7 @@ export default function ClientDashboard({ onBack }: ClientDashboardProps) {
     e.preventDefault()
     if (!projectInput.trim()) return
 
-    sendMessage('user', 'Juan Dela Cruz', projectInput)
+    sendMessage('user', projectInput)
     setProjectProjectInput('')
   }
 

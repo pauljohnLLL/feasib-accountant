@@ -4,12 +4,6 @@ import { useChat } from '../features/ChatContext'
 
 export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }) {
   const [activeTab, setActiveTab] = useState('Messages');
-
-  // Real, Supabase-backed, realtime chat.
-  // NOTE: ChatContext currently exposes ONE shared/global thread — it isn't
-  // scoped per-client yet. So for now, opening any conversation in the list
-  // below opens that same shared thread. See the note at the bottom of this
-  // file for how to add per-client scoping later.
   const { messages, sendMessage } = useChat()
   const [chatInput, setChatInput] = useState('')
   const [openThread, setOpenThread] = useState<string | null>(null)
@@ -17,7 +11,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault()
     if (!chatInput.trim()) return
-    sendMessage('consultant', 'Maria Santos', chatInput)
+    sendMessage('consultant', chatInput)
     setChatInput('')
   }
 
@@ -34,7 +28,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
 
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 font-sans">
-      {/* Sidebar */}
+
       <aside className="w-64 bg-[#0B2F1D] text-white flex flex-col justify-between p-4">
         <div>
           <div className="flex items-center justify-between mb-8 px-2">
@@ -64,7 +58,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
         </button>
       </aside>
 
-      {/* Main Content */}
+      
       <main className="flex-1 flex border-l border-gray-200 bg-white">
         {/* Chat List */}
         <div className="w-80 border-r border-gray-100 p-4">
@@ -73,7 +67,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
             <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
             <input type="text" placeholder="Search consultants..." className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm" />
           </div>
-          {/* Chat Preview List */}
+          
           <div className="space-y-1">
              <ChatUser name="Maria Santos" msg="I will complete the financial..." time="2m ago" badge="2" active={openThread === 'Maria Santos'} onClick={() => setOpenThread('Maria Santos')} />
              <ChatUser name="Alex Chen" msg="The tax documents have been re..." time="15m ago" active={openThread === 'Alex Chen'} onClick={() => setOpenThread('Alex Chen')} />
@@ -81,7 +75,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
           </div>
         </div>
 
-        {/* Chat Area */}
+        
         {openThread ? (
           <div className="flex-1 flex flex-col min-h-0">
             <div className="px-6 py-3 border-b border-gray-100 flex items-center gap-3 shrink-0">
@@ -124,7 +118,7 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
           </div>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
-            <div className="p-4 bg-blue-50 text-blue-500 rounded-full mb-4">
+            <div className="p-4 bg-emerald-50 text-emerald-500 rounded-full mb-4">
               <MessageSquare size={32} />
             </div>
             <h3 className="text-gray-900 font-bold text-lg">Select a conversation</h3>
@@ -136,7 +130,16 @@ export default function AdminDashboard({ onSignOut }: { onSignOut?: () => void }
   );
 }
 
-function ChatUser({ name, msg, time, badge, active, onClick }: any) {
+interface ChatUserProps {
+  name: string;
+  msg: string;
+  time: string;
+  badge?: string | number;
+  active: boolean;
+  onClick: () => void;
+}
+
+function ChatUser({ name, msg, time, badge, active, onClick }: ChatUserProps) {
   return (
     <div onClick={onClick} className={`p-3 rounded-lg flex justify-between items-center cursor-pointer ${active ? 'bg-green-50' : 'hover:bg-gray-50'}`}>
       <div className="flex items-center gap-3">

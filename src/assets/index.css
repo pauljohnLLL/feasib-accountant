@@ -3,7 +3,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Irehistro ang galaw ng animation */
 @keyframes tracking-in-expand-fwd-bottom {
   0% {
     letter-spacing: -0.5em;
@@ -19,7 +18,45 @@
   }
 }
 
-/* Gawan ng utility class para matawag sa Tailwind */
 .animate-tracking-in {
-  animation: tracking-in-expand-fwd-bottom 0.8s cubic-bezier(0.215, 0.610, 0.355, 1.000) both;
+  animation: tracking-in-expand-fwd-bottom 0.8s cubic-bezier(0.215, 0.610, 0.355, 1) both;
+}
+
+/* The sole application background: a fixed, continuous accounting grid.
+   The generous contrast keeps it behind, rather than competing with, forms. */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: #e8f3ea;
+  background-color: #071d14;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='32' viewBox='0 0 80 32'%3E%3Cpath d='M 80 0 L 0 0 0 32' fill='none' stroke='%2379B669' stroke-width='0.7' stroke-opacity='0.13'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-attachment: fixed;
+  background-position: top left;
+}
+
+/* Some routes use opaque component surfaces. This fixed, pointer-free overlay
+   keeps the spreadsheet texture visible without changing those components. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgb(121 182 105 / 12%) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(121 182 105 / 12%) 1px, transparent 1px);
+  background-size: 80px 32px;
+}
+
+/* Fade the carousel content itself at its boundaries. Unlike a blur overlay,
+   this cannot produce a visible rectangular panel over the first or last card. */
+.service-flow-viewport {
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 45%) 6%, #000 16%, #000 84%, rgb(0 0 0 / 45%) 94%, transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0%, rgb(0 0 0 / 45%) 6%, #000 16%, #000 84%, rgb(0 0 0 / 45%) 94%, transparent 100%);
 }

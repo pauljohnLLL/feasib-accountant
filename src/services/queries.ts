@@ -2,7 +2,7 @@ import {useQuery} from '@tanstack/react-query';
 import api from './api';
 import type {LedgerEntry} from '../types/index';
 
-const fetchLedgers = async (): Promise<LedgerEntry[]> => {
+export const fetchLedgers = async (): Promise<LedgerEntry[]> => {
     const {data} = await api.get('/ledgers');
     return data;
 };

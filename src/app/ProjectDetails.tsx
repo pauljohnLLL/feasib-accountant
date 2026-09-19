@@ -11,9 +11,9 @@ export default function ProjectDetail({ currentRole }: { currentRole: 'client' |
     if (!chatInput.trim()) return
 
     if (currentRole === 'client') {
-      sendMessage('user', 'Juan Dela Cruz', chatInput)
+      sendMessage('user', chatInput)
     } else {
-      sendMessage('consultant', 'Maria Santos', chatInput)
+      sendMessage('consultant', chatInput)
     }
     setChatInput('')
   }
